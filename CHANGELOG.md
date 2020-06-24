@@ -1,15 +1,17 @@
-0.21.0 / NEXT
+0.21.0 / 2020/06/06
 ====================
 This release comes with **breaking changes** that will affect most,
-if not all of your projects. See the [migration guide](./MIGRATIONS.md)
+if not all of your projects. See the [migration guide](https://github.com/apifytech/apify-js/blob/master/MIGRATIONS.md)
 for more information and examples.
 
 First large change is a redesigned proxy configuration. `Cheerio` and `Puppeteer` crawlers
 now accept a `proxyConfiguration` parameter, which is an instance of `ProxyConfiguration`.
-This class now exclusively manages both Apify Proxy and custom proxies.
+This class now exclusively manages both Apify Proxy and custom proxies. Visit the new
+[proxy management guide](https://sdk.apify.com/docs/guides/proxy-management)
 
 We also removed `Apify.utils.getRandomUserAgent()` as it was no longer effective
-in avoiding bot detection.
+in avoiding bot detection and changed the default values for empty properties in
+`Request` instances.
 
 - **BREAKING:** Removed `Apify.getApifyProxyUrl()`. To get an Apify Proxy url,
   use `proxyConfiguration.newUrl([sessionId])`.
@@ -18,16 +20,23 @@ in avoiding bot detection.
   in `requestAsBrowser` and `Apify.launchPuppeteer`.
 - **BREAKING:** Removed `Apify.utils.getRandomUserAgent()` as it was no longer effective
   in avoiding bot detection.
+- **BREAKING:** `Request` instances no longer initialize empty properties with `null`,
+  which means that:
+    - empty `errorMessages` are now represented by `[]`, and
+    - empty `loadedUrl`, `payload` and `handledAt` are `undefined`.
 - Add `Apify.createProxyConfiguration()` `async` function to create `ProxyConfiguration`
   instances. `ProxyConfiguration` itself is not exposed.
 - Add `proxyConfiguration` to `CheerioCrawlerOptions`
   and `PuppeteerCrawlerOptions`.
 - Add `proxyInfo` to `CheerioHandlePageInputs` and `PuppeteerHandlePageInputs`.
   You can use this object to retrieve information about the currently used proxy
-   in `Puppeteer` and `Cheerio` crawlers.
+  in `Puppeteer` and `Cheerio` crawlers.
+- Add click buttons and scroll up options to `Apify.utils.puppeteer.infiniteScroll()`.
 - Fixed a bug where intercepted requests would never continue.
 - Fixed a bug where `Apify.utils.requestAsBrowser()` would get into redirect loops.
-
+- Fix `Apify.utils.getMemoryInfo()` crashing the process on AWS Lambda and on systems
+  running in Docker without memory cgroups enabled.
+- Update Puppeteer to 3.3.0.
 
 0.20.4 / 2020-05-11
 ====================
@@ -40,7 +49,6 @@ in avoiding bot detection.
 - Fix issues in documentation.
 - Updated `@apify/http-request` to fix issue in the `proxy-agent` package.
 - Updated Puppeteer to 3.0.2
-
 
 0.20.3 / 2020-04-14
 ====================
