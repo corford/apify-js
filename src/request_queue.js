@@ -919,11 +919,16 @@ export class RequestQueueLocal {
         while (!request && files.length) {
             const filename = files.shift();
             const queueOrderNo = filePathToQueueOrderNo(filename);
-
-            if (this.queueOrderNoInProgress[queueOrderNo]) continue; // eslint-disable-line
+            this.log.info(`queueOrderNo=${queueOrderNo}`);
+            if (this.queueOrderNoInProgress[queueOrderNo]) {
+                this.log.info(`${queueOrderNo} is already in progress`);
+                continue; // eslint-disable-line
+            }
 
             this.queueOrderNoInProgress[queueOrderNo] = true;
+            this.log.info(`old inProgressCount=${this.inProgressCount}`);
             this.inProgressCount++;
+            this.log.info(`new inProgressCount=${this.inProgressCount}`);
 
             // TODO: There must be a better way. This try/catch is here because there is a race condition between
             //       between this and call to reclaimRequest() or markRequestHandled() that may move/rename/deleted
@@ -933,12 +938,15 @@ export class RequestQueueLocal {
             try {
                 request = await this._getRequestByQueueOrderNo(queueOrderNo);
             } catch (err) {
+                this.log.info(`deleting queueOrderNo ${queueOrderNo}`, err);
                 delete this.queueOrderNoInProgress[queueOrderNo];
                 this.inProgressCount--;
+                this.log.info(`current inProgressCount=${this.inProgressCount}`);
                 if (err.code !== ENOENT) throw err;
             }
         }
 
+        this.log.info(`returning request ${JSON.stringify(request)}`);
         return request;
     }
 
@@ -947,9 +955,13 @@ export class RequestQueueLocal {
 
         await this.initializationPromise;
         const queueOrderNo = this.requestIdToQueueOrderNo[request.id];
+        this.log.info(`queueOrderNo for request id ${request.id} is ${queueOrderNo}`);
         const source = this._getFilePath(queueOrderNo, false);
+        this.log.info(`source ${source}`);
         const dest = this._getFilePath(queueOrderNo, true);
+        this.log.info(`dest ${dest}`);
 
+        this.log.info(`checking if queueOrderNo is in progress (queueOrderNo=${queueOrderNo})`);
         if (!this.queueOrderNoInProgress[queueOrderNo]) {
             throw new Error(`Cannot mark request ${request.id} as handled, because it is not in progress!`);
         }
@@ -964,7 +976,10 @@ export class RequestQueueLocal {
         await fs.rename(source, dest);
         this.pendingCount--;
         this._handledCount++;
+        this.log.info(`inProgressCount before mark = ${this.inProgressCount}`);
         this.inProgressCount--;
+        this.log.info(`updated inProgressCount after mark = ${this.inProgressCount}`);
+        this.log.info(`deleting queueOrderNo ${queueOrderNo}`);
         delete this.queueOrderNoInProgress[queueOrderNo];
 
         return {
@@ -980,10 +995,15 @@ export class RequestQueueLocal {
 
         await this.initializationPromise;
         const oldQueueOrderNo = this.requestIdToQueueOrderNo[request.id];
+        this.log.info(`oldQueueOrderNo for request id ${request.id} is ${oldQueueOrderNo}`);
         const newQueueOrderNo = this._getQueueOrderNo(forefront);
+        this.log.info(`newQueueOrderNo for request id ${request.id} is ${newQueueOrderNo}`);
         const source = this._getFilePath(oldQueueOrderNo);
+        this.log.info(`old source ${source}`);
         const dest = this._getFilePath(newQueueOrderNo);
+        this.log.info(`new dest ${dest}`);
 
+        this.log.info(`checking if oldQueueOrderNo is in progress (oldQueueOrderNo=${queueOrderNo})`);
         if (!this.queueOrderNoInProgress[oldQueueOrderNo]) {
             throw new Error(`Cannot reclaim request ${request.id}, because it is not in progress!`);
         }
@@ -996,7 +1016,10 @@ export class RequestQueueLocal {
         //       Situation where two files exists at the same time may cause race condition bugs.
         await fs.writeFile(source, JSON.stringify(request, null, 4));
         await fs.rename(source, dest);
+        this.log.info(`inProgressCount before reclaim = ${this.inProgressCount}`);
         this.inProgressCount--;
+        this.log.info(`updated inProgressCount after reclaim = ${this.inProgressCount}`);
+        this.log.info(`deleting oldQueueOrderNo ${oldQueueOrderNo}`);
         delete this.queueOrderNoInProgress[oldQueueOrderNo];
 
         return {
