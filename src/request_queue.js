@@ -1003,7 +1003,7 @@ export class RequestQueueLocal {
         const dest = this._getFilePath(newQueueOrderNo);
         this.log.info(`new dest ${dest}`);
 
-        this.log.info(`checking if oldQueueOrderNo is in progress (oldQueueOrderNo=${queueOrderNo})`);
+        this.log.info(`checking if oldQueueOrderNo is in progress (oldQueueOrderNo=${oldQueueOrderNo})`);
         if (!this.queueOrderNoInProgress[oldQueueOrderNo]) {
             throw new Error(`Cannot reclaim request ${request.id}, because it is not in progress!`);
         }
