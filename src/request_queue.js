@@ -937,6 +937,7 @@ export class RequestQueueLocal {
             //       meanwhile causing this to fail.
             try {
                 request = await this._getRequestByQueueOrderNo(queueOrderNo);
+                this.log.info(`Retrieved request id: ${request.id}`);
             } catch (err) {
                 this.log.info(`deleting queueOrderNo ${queueOrderNo}`, err);
                 delete this.queueOrderNoInProgress[queueOrderNo];
@@ -963,6 +964,7 @@ export class RequestQueueLocal {
 
         this.log.info(`checking if queueOrderNo is in progress (queueOrderNo=${queueOrderNo})`);
         if (!this.queueOrderNoInProgress[queueOrderNo]) {
+            this.log.info(`Dumping queueOrderNoInProgress: ${JSON.stringify(this.queueOrderNoInProgress)}`);
             throw new Error(`Cannot mark request ${request.id} as handled, because it is not in progress!`);
         }
 
@@ -1005,6 +1007,7 @@ export class RequestQueueLocal {
 
         this.log.info(`checking if oldQueueOrderNo is in progress (oldQueueOrderNo=${oldQueueOrderNo})`);
         if (!this.queueOrderNoInProgress[oldQueueOrderNo]) {
+            this.log.info(`Dumping queueOrderNoInProgress: ${JSON.stringify(this.queueOrderNoInProgress)}`);
             throw new Error(`Cannot reclaim request ${request.id}, because it is not in progress!`);
         }
 
