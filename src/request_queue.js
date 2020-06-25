@@ -36,7 +36,7 @@ const RECENTLY_HANDLED_CACHE_SIZE = 1000;
 // to be available to subsequent reads.
 export const STORAGE_CONSISTENCY_DELAY_MILLIS = 3000;
 
-const STALE_QUEUE_ORDER_NO_BUFFER_SIZE = 500;
+const STALE_QUEUE_ORDER_NO_BUFFER_MIN_SIZE = 500;
 
 const { requestQueues } = apifyClient;
 const queuesCache = globalCache.create('request-queue-cache', MAX_OPENED_QUEUES); // Open queues are stored here.
@@ -1035,11 +1035,14 @@ export class RequestQueueLocal {
         this.inProgressCount--;
         this.log.info(`updated inProgressCount after reclaim = ${this.inProgressCount}`);
         this.log.info(`deleting oldQueueOrderNo ${oldQueueOrderNo}`);
-        this.staleQueueOrderNoBuffer.push(oldQueueOrderNo);
-        delete this.queueOrderNoInProgress[oldQueueOrderNo];
-        if (this.staleQueueOrderNoBuffer.length > STALE_QUEUE_ORDER_NO_BUFFER_SIZE) {
+        const staleQueueOrderNoBufferMaxSize = this.inProgressCount > STALE_QUEUE_ORDER_NO_BUFFER_MIN_SIZE
+            ? this.inProgressCount
+            : STALE_QUEUE_ORDER_NO_BUFFER_MIN_SIZE;
+        if (this.staleQueueOrderNoBuffer.length === staleQueueOrderNoBufferMaxSize) {
             this.staleQueueOrderNoBuffer.shift();
         }
+        this.staleQueueOrderNoBuffer.push(oldQueueOrderNo);
+        delete this.queueOrderNoInProgress[oldQueueOrderNo];
         this.log.info(`Dumping queueOrderNoInProgress after reclaim: ${JSON.stringify(this.queueOrderNoInProgress)}`);
 
         return {
