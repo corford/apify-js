@@ -921,7 +921,7 @@ export class RequestQueueLocal {
             const queueOrderNo = filePathToQueueOrderNo(filename);
             this.log.info(`queueOrderNo=${queueOrderNo}`);
             this.log.info(`Dumping queueOrderNoInProgress at inspect: ${JSON.stringify(this.queueOrderNoInProgress)}`);
-            if ((this.queueOrderNoInProgress[queueOrderNo]) || await fs.pathExists(filename)) {
+            if ((this.queueOrderNoInProgress[queueOrderNo]) || fs.existsSync(filename)) {
                 this.log.info(`${queueOrderNo} is already in progress`);
                 continue; // eslint-disable-line
             }
