@@ -920,12 +920,15 @@ export class RequestQueueLocal {
             const filename = files.shift();
             const queueOrderNo = filePathToQueueOrderNo(filename);
             this.log.info(`queueOrderNo=${queueOrderNo}`);
+            this.log.info(`Dumping queueOrderNoInProgress at inspect: ${JSON.stringify(this.queueOrderNoInProgress)}`);
             if (this.queueOrderNoInProgress[queueOrderNo]) {
                 this.log.info(`${queueOrderNo} is already in progress`);
                 continue; // eslint-disable-line
             }
-
+            
+            this.log.info(`Dumping queueOrderNoInProgress before: ${JSON.stringify(this.queueOrderNoInProgress)}`);
             this.queueOrderNoInProgress[queueOrderNo] = true;
+            this.log.info(`Dumping queueOrderNoInProgress after: ${JSON.stringify(this.queueOrderNoInProgress)}`);
             this.log.info(`old inProgressCount=${this.inProgressCount}`);
             this.inProgressCount++;
             this.log.info(`new inProgressCount=${this.inProgressCount}`);
@@ -937,7 +940,7 @@ export class RequestQueueLocal {
             //       meanwhile causing this to fail.
             try {
                 request = await this._getRequestByQueueOrderNo(queueOrderNo);
-                this.log.info(`Retrieved request id: ${request.id}`);
+                this.log.info(`Retrieved request id: ${request.id} (url=${request.url})`);
             } catch (err) {
                 this.log.info(`deleting queueOrderNo ${queueOrderNo}`, err);
                 delete this.queueOrderNoInProgress[queueOrderNo];
@@ -955,8 +958,9 @@ export class RequestQueueLocal {
         validateMarkRequestHandledParams(request);
 
         await this.initializationPromise;
+        this.log.info(`Dumping queueOrderNoInProgress before mark: ${JSON.stringify(this.queueOrderNoInProgress)}`);
         const queueOrderNo = this.requestIdToQueueOrderNo[request.id];
-        this.log.info(`queueOrderNo for request id ${request.id} is ${queueOrderNo}`);
+        this.log.info(`queueOrderNo for request id ${request.id} (url=${request.url}) is ${queueOrderNo}`);
         const source = this._getFilePath(queueOrderNo, false);
         this.log.info(`source ${source}`);
         const dest = this._getFilePath(queueOrderNo, true);
@@ -983,6 +987,7 @@ export class RequestQueueLocal {
         this.log.info(`updated inProgressCount after mark = ${this.inProgressCount}`);
         this.log.info(`deleting queueOrderNo ${queueOrderNo}`);
         delete this.queueOrderNoInProgress[queueOrderNo];
+        this.log.info(`Dumping queueOrderNoInProgress after mark: ${JSON.stringify(this.queueOrderNoInProgress)}`);
 
         return {
             requestId: request.id,
@@ -996,10 +1001,11 @@ export class RequestQueueLocal {
         const { forefront } = validateReclaimRequestParams(request, opts);
 
         await this.initializationPromise;
+        this.log.info(`Dumping queueOrderNoInProgress before reclaim: ${JSON.stringify(this.queueOrderNoInProgress)}`);
         const oldQueueOrderNo = this.requestIdToQueueOrderNo[request.id];
-        this.log.info(`oldQueueOrderNo for request id ${request.id} is ${oldQueueOrderNo}`);
+        this.log.info(`oldQueueOrderNo for request id ${request.id} (url=${request.url}) is ${oldQueueOrderNo}`);
         const newQueueOrderNo = this._getQueueOrderNo(forefront);
-        this.log.info(`newQueueOrderNo for request id ${request.id} is ${newQueueOrderNo}`);
+        this.log.info(`newQueueOrderNo for request id ${request.id} (url=${request.url}) is ${newQueueOrderNo}`);
         const source = this._getFilePath(oldQueueOrderNo);
         this.log.info(`old source ${source}`);
         const dest = this._getFilePath(newQueueOrderNo);
@@ -1024,6 +1030,7 @@ export class RequestQueueLocal {
         this.log.info(`updated inProgressCount after reclaim = ${this.inProgressCount}`);
         this.log.info(`deleting oldQueueOrderNo ${oldQueueOrderNo}`);
         delete this.queueOrderNoInProgress[oldQueueOrderNo];
+        this.log.info(`Dumping queueOrderNoInProgress after reclaim: ${JSON.stringify(this.queueOrderNoInProgress)}`);
 
         return {
             requestId: request.id,
