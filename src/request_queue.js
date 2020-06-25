@@ -913,7 +913,7 @@ export class RequestQueueLocal {
         await this.initializationPromise;
 
         const files = await fs.readdir(this.localPendingEmulationPath);
-
+        this.log.info(`staleQueueOrderNo size: ${this.staleQueueOrderNo}`);
         this._updateMetadata();
 
         let request = null;
@@ -926,6 +926,7 @@ export class RequestQueueLocal {
                 this.log.info(`${queueOrderNo} is already in progress`);
                 continue; // eslint-disable-line
             } else if (this.staleQueueOrderNo[queueOrderNo]) {
+                this.log.info(`${queueOrderNo} is stale`);
                 delete this.staleQueueOrderNo[queueOrderNo];
                 continue;
             }
