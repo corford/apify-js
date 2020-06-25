@@ -913,7 +913,7 @@ export class RequestQueueLocal {
         await this.initializationPromise;
 
         const files = await fs.readdir(this.localPendingEmulationPath);
-        this.log.info(`staleQueueOrderNo size: ${this.staleQueueOrderNo}`);
+        this.log.info(`staleQueueOrderNo size: ${Object.keys(this.staleQueueOrderNo).length}`);
         this._updateMetadata();
 
         let request = null;
