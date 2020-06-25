@@ -921,11 +921,11 @@ export class RequestQueueLocal {
             const queueOrderNo = filePathToQueueOrderNo(filename);
             this.log.info(`queueOrderNo=${queueOrderNo}`);
             this.log.info(`Dumping queueOrderNoInProgress at inspect: ${JSON.stringify(this.queueOrderNoInProgress)}`);
-            if (this.queueOrderNoInProgress[queueOrderNo]) {
+            if ((this.queueOrderNoInProgress[queueOrderNo]) || (!fs.existsSync(filename))) {
                 this.log.info(`${queueOrderNo} is already in progress`);
                 continue; // eslint-disable-line
             }
-            
+
             this.log.info(`Dumping queueOrderNoInProgress before: ${JSON.stringify(this.queueOrderNoInProgress)}`);
             this.queueOrderNoInProgress[queueOrderNo] = true;
             this.log.info(`Dumping queueOrderNoInProgress after: ${JSON.stringify(this.queueOrderNoInProgress)}`);
