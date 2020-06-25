@@ -757,6 +757,7 @@ export class RequestQueueLocal {
         this.inProgressCount = 0;
         this.requestIdToQueueOrderNo = {};
         this.queueOrderNoInProgress = {};
+        this.staleQueueOrderNo = {};
         this.requestsBeingWrittenToFile = new Map();
 
         this.createdAt = null;
@@ -921,9 +922,12 @@ export class RequestQueueLocal {
             const queueOrderNo = filePathToQueueOrderNo(filename);
             this.log.info(`queueOrderNo=${queueOrderNo}`);
             this.log.info(`Dumping queueOrderNoInProgress at inspect: ${JSON.stringify(this.queueOrderNoInProgress)}`);
-            if ((this.queueOrderNoInProgress[queueOrderNo]) || fs.existsSync(filename)) {
+            if (this.queueOrderNoInProgress[queueOrderNo]) {
                 this.log.info(`${queueOrderNo} is already in progress`);
                 continue; // eslint-disable-line
+            } else if (this.staleQueueOrderNo[queueOrderNo]) {
+                delete this.staleQueueOrderNo[queueOrderNo];
+                continue;
             }
 
             this.log.info(`Dumping queueOrderNoInProgress before: ${JSON.stringify(this.queueOrderNoInProgress)}`);
@@ -1029,6 +1033,7 @@ export class RequestQueueLocal {
         this.inProgressCount--;
         this.log.info(`updated inProgressCount after reclaim = ${this.inProgressCount}`);
         this.log.info(`deleting oldQueueOrderNo ${oldQueueOrderNo}`);
+        this.staleQueueOrderNo[oldQueueOrderNo] = true;
         delete this.queueOrderNoInProgress[oldQueueOrderNo];
         this.log.info(`Dumping queueOrderNoInProgress after reclaim: ${JSON.stringify(this.queueOrderNoInProgress)}`);
 
