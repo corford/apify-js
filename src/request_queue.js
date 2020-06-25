@@ -929,9 +929,6 @@ export class RequestQueueLocal {
                 continue; // eslint-disable-line
             } else if (this.staleQueueOrderNoBuffer.includes(queueOrderNo)) {
                 this.log.info(`${queueOrderNo} is stale`);
-                if (this.staleQueueOrderNoBuffer.length > STALE_QUEUE_ORDER_NO_BUFFER_SIZE) {
-                    this.staleQueueOrderNoBuffer.shift();
-                }
                 continue;
             }
 
@@ -1040,6 +1037,9 @@ export class RequestQueueLocal {
         this.log.info(`deleting oldQueueOrderNo ${oldQueueOrderNo}`);
         this.staleQueueOrderNoBuffer.push(oldQueueOrderNo);
         delete this.queueOrderNoInProgress[oldQueueOrderNo];
+        if (this.staleQueueOrderNoBuffer.length > STALE_QUEUE_ORDER_NO_BUFFER_SIZE) {
+            this.staleQueueOrderNoBuffer.shift();
+        }
         this.log.info(`Dumping queueOrderNoInProgress after reclaim: ${JSON.stringify(this.queueOrderNoInProgress)}`);
 
         return {
