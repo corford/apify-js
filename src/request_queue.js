@@ -36,6 +36,8 @@ const RECENTLY_HANDLED_CACHE_SIZE = 1000;
 // to be available to subsequent reads.
 export const STORAGE_CONSISTENCY_DELAY_MILLIS = 3000;
 
+const STALE_QUEUE_ORDER_NO_BUFFER_SIZE = 500;
+
 const { requestQueues } = apifyClient;
 const queuesCache = globalCache.create('request-queue-cache', MAX_OPENED_QUEUES); // Open queues are stored here.
 
@@ -757,7 +759,7 @@ export class RequestQueueLocal {
         this.inProgressCount = 0;
         this.requestIdToQueueOrderNo = {};
         this.queueOrderNoInProgress = {};
-        this.staleQueueOrderNo = {};
+        this.staleQueueOrderNoBuffer = [];
         this.requestsBeingWrittenToFile = new Map();
 
         this.createdAt = null;
@@ -913,7 +915,7 @@ export class RequestQueueLocal {
         await this.initializationPromise;
 
         const files = await fs.readdir(this.localPendingEmulationPath);
-        this.log.info(`staleQueueOrderNo size: ${Object.keys(this.staleQueueOrderNo).length}`);
+        this.log.info(`staleQueueOrderNo size: ${this.staleQueueOrderNoBuffer.length}`);
         this._updateMetadata();
 
         let request = null;
@@ -925,9 +927,11 @@ export class RequestQueueLocal {
             if (this.queueOrderNoInProgress[queueOrderNo]) {
                 this.log.info(`${queueOrderNo} is already in progress`);
                 continue; // eslint-disable-line
-            } else if (this.staleQueueOrderNo[queueOrderNo]) {
+            } else if (this.staleQueueOrderNoBuffer.includes(queueOrderNo)) {
                 this.log.info(`${queueOrderNo} is stale`);
-                delete this.staleQueueOrderNo[queueOrderNo];
+                if (this.staleQueueOrderNoBuffer.length > STALE_QUEUE_ORDER_NO_BUFFER_SIZE) {
+                    this.staleQueueOrderNoBuffer.shift();
+                }
                 continue;
             }
 
@@ -1034,7 +1038,7 @@ export class RequestQueueLocal {
         this.inProgressCount--;
         this.log.info(`updated inProgressCount after reclaim = ${this.inProgressCount}`);
         this.log.info(`deleting oldQueueOrderNo ${oldQueueOrderNo}`);
-        this.staleQueueOrderNo[oldQueueOrderNo] = true;
+        this.staleQueueOrderNoBuffer.push(oldQueueOrderNo);
         delete this.queueOrderNoInProgress[oldQueueOrderNo];
         this.log.info(`Dumping queueOrderNoInProgress after reclaim: ${JSON.stringify(this.queueOrderNoInProgress)}`);
 
