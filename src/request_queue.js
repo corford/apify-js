@@ -32,6 +32,10 @@ export const MAX_QUERIES_FOR_CONSISTENCY = 6;
 // a time lower than expected maximum latency of DynamoDB, but low enough not to waste too much memory.
 const RECENTLY_HANDLED_CACHE_SIZE = 1000;
 
+// This number should be large enough so that RequestQueueLocal's fetchNextRequest() does not accidentally
+// re-use a previously reclaimed queueOrderNo, but low enough not to waste too much memory.
+const INVALIDATED_QUEUE_ORDER_NO_CACHE_SIZE = 500;
+
 // Indicates how long it usually takes for the underlying storage to propagate all writes
 // to be available to subsequent reads.
 export const STORAGE_CONSISTENCY_DELAY_MILLIS = 3000;
@@ -757,6 +761,7 @@ export class RequestQueueLocal {
         this.inProgressCount = 0;
         this.requestIdToQueueOrderNo = {};
         this.queueOrderNoInProgress = {};
+        this.invalidatedQueueOrderNoCache = [];
         this.requestsBeingWrittenToFile = new Map();
 
         this.createdAt = null;
@@ -921,6 +926,7 @@ export class RequestQueueLocal {
             const queueOrderNo = filePathToQueueOrderNo(filename);
 
             if (this.queueOrderNoInProgress[queueOrderNo]) continue; // eslint-disable-line
+            if (this.invalidatedQueueOrderNoCache.includes(queueOrderNo)) continue; // eslint-disable-line
 
             this.queueOrderNoInProgress[queueOrderNo] = true;
             this.inProgressCount++;
@@ -997,6 +1003,10 @@ export class RequestQueueLocal {
         await fs.writeFile(source, JSON.stringify(request, null, 4));
         await fs.rename(source, dest);
         this.inProgressCount--;
+        if (this.invalidatedQueueOrderNoCache.length === INVALIDATED_QUEUE_ORDER_NO_CACHE_SIZE) {
+            this.invalidatedQueueOrderNoCache.shift();
+        }
+        this.invalidatedQueueOrderNoCache.push(oldQueueOrderNo);
         delete this.queueOrderNoInProgress[oldQueueOrderNo];
 
         return {
