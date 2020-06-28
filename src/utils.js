@@ -691,7 +691,8 @@ export const printOutdatedSdkWarning = () => {
  * Gets parsed content type from response object
  * @param {IncomingMessage} response - HTTP response object
  * @return {{ type: string, charset: string }}
- * @ignore
+ * @memberOf utils
+ * @function
  */
 export const parseContentTypeFromResponse = (response) => {
     checkParamOrThrow(response, 'response', 'Object');
@@ -812,4 +813,5 @@ export const publicUtils = {
     URL_WITH_COMMAS_REGEX,
     createRequestDebugInfo,
     waitForRunToFinish,
+    parseContentTypeFromResponse,
 };
