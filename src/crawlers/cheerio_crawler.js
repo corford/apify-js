@@ -155,6 +155,18 @@ const DEFAULT_AUTOSCALED_POOL_OPTIONS = {
  *
  *   See [source code](https://github.com/apify/apify-js/blob/master/src/crawlers/cheerio_crawler.js#L13)
  *   for the default implementation of this function.
+ * @property {parseContentTypeFunction} [parseContentTypeFunction]
+ *   Overrides the function that parses the content type of a response.
+ *
+ *   This can be useful if you need to deal with broken sites that send the wrong content-type header.
+ *
+ *   The function receives two paramters: request and responseStream. It must return an object containing a valid content type and charset.
+ * ```
+ * {
+ *   type: 'application/json',
+ *   charset: 'utf-8',
+ * }
+ * ```
  * @property {string[]} [additionalMimeTypes]
  *   An array of <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Complete_list_of_MIME_types"
  *   target="_blank">MIME types</a> you want the crawler to load and process.
@@ -300,6 +312,7 @@ class CheerioCrawler {
         const {
             requestOptions,
             handlePageFunction,
+            parseContentTypeFunction = this._defaultParseContentTypeFunction,
             requestTimeoutSecs = 30,
             handlePageTimeoutSecs = 60,
             ignoreSslErrors = true,
@@ -362,6 +375,7 @@ class CheerioCrawler {
         this.handlePageFunction = handlePageFunction;
         this.handlePageTimeoutMillis = handlePageTimeoutSecs * 1000;
         this.requestTimeoutMillis = requestTimeoutSecs * 1000;
+        this.parseContentTypeFunction = parseContentTypeFunction;
         this.ignoreSslErrors = ignoreSslErrors;
         this.suggestResponseEncoding = suggestResponseEncoding;
         this.forceResponseEncoding = forceResponseEncoding;
@@ -557,7 +571,7 @@ class CheerioCrawler {
         }
 
         const { statusCode } = responseStream;
-        const { type, charset } = parseContentTypeFromResponse(responseStream);
+        const { type, charset } = this.parseContentTypeFunction(request, responseStream);
         const { response, encoding } = this._encodeResponse(request, responseStream, charset);
         const contentType = { type, encoding };
 
@@ -719,6 +733,15 @@ class CheerioCrawler {
     async _defaultHandleFailedRequestFunction({ error, request }) { // eslint-disable-line class-methods-use-this
         const details = _.pick(request, 'id', 'url', 'method', 'uniqueKey');
         this.log.exception(error, 'Request failed and reached maximum retries', details);
+    }
+
+    /**
+     * @param {Request} request
+     * @param {stream} responseStream
+     * @private
+     */
+    _defaultParseContentTypeFunction(request, responseStream) {
+        return parseContentTypeFromResponse(responseStream);
     }
 }
 
