@@ -1,3 +1,40 @@
+0.21.4 / 2020/09/02
+====================
+The statistics that you may remember from logs are now persisted in key-value store,
+so you won't lose count when your actor restarts. We've also added a lot of useful
+stats in there which can be useful to you after a run finishes. Besides that,
+we fixed some bugs and annoyances and improved the TypeScript experience a bit.
+
+- Add persistence to `Statistics` class and automatically persist it in `BasicCrawler`.
+- Fix issue where inaccessible Apify Proxy would cause `ProxyConfiguration` to throw
+  a timeout error.
+- Update default user agent to Chrome 85
+- Bump Puppeteer to 5.2.1 which uses Chromium 85
+- **TypeScript**: Fix `RequestAsBrowserOptions` missing some values and add `RequestQueueInfo`
+  as a return value from `requestQueue.getInfo()`
+
+0.21.3 / 2020/07/27
+====================
+- Fix useless logging in Session.
+
+0.21.2 / 2020/07/27
+====================
+- Fix cookies with leading dot in domain (as extracted from Puppeteer)
+  not being correctly added to Sessions.
+
+0.21.1 / 2020/07/21
+====================
+We fixed some bugs, improved a few things and bumped Puppeteer to match latest Chrome 84.
+
+- Allow `Apify.createProxyConfiguration` to be used seamlessly with the proxy component
+  of Actor Input UI.
+- Fix integration of plugins into `CheerioCrawler` with the `crawler.use()` function.
+- Fix a race condition which caused `RequestQueueLocal` to fail handling requests.
+- Fix broken debug logging in `SessionPool`.
+- Improve `ProxyConfiguration` error message for missing password / token.
+- Update Puppeteer to 5.2.0
+- Improve docs, update packages and so on.
+
 0.21.0 / 2020/06/06
 ====================
 This release comes with **breaking changes** that will affect most,
