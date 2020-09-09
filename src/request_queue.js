@@ -710,7 +710,7 @@ export class RequestQueue {
      * }
      * ```
      *
-     * @returns {Promise<object>}
+     * @returns {Promise<RequestQueueInfo>}
      */
     async getInfo() {
         return requestQueues.getQueue({ queueId: this.queueId });
@@ -818,7 +818,7 @@ export class RequestQueueLocal {
             : sgn + (base + now);
     }
 
-    async _getRequestByQueueOrderNo(queueOrderNo, fallbackToHandled=true) {
+    async _getRequestByQueueOrderNo(queueOrderNo, fallbackToHandled = true) {
         checkParamOrThrow(queueOrderNo, 'queueOrderNo', 'Number');
         let buffer;
         let filePath;
@@ -931,8 +931,8 @@ export class RequestQueueLocal {
             //       Ie. the file gets listed in fs.readdir() but removed from this.queueOrderNoInProgress
             //       meanwhile causing this to fail.
             try {
-                // To avoid smothering ENOENT errors from  _getRequestByQueueOrderNo (which can cause a race
-                // condition with markRequestHandled) we pass false here
+                // To avoid a race condition with markRequestHandled(), we pass false here so ENOENT errors are not
+                // smothered when attempting to read a file that recently moved from pending to handled.
                 request = await this._getRequestByQueueOrderNo(queueOrderNo, false);
             } catch (err) {
                 delete this.queueOrderNoInProgress[queueOrderNo];
@@ -1111,3 +1111,16 @@ export const openRequestQueue = (queueIdOrName, options = {}) => {
         ? openLocalStorage(queueIdOrName, ENV_VARS.DEFAULT_REQUEST_QUEUE_ID, RequestQueueLocal, queuesCache)
         : openRemoteStorage(queueIdOrName, ENV_VARS.DEFAULT_REQUEST_QUEUE_ID, RequestQueue, queuesCache, getOrCreateQueue);
 };
+
+/**
+ * @typedef RequestQueueInfo
+ * @property {string} id
+ * @property {string} name
+ * @property {string} userId
+ * @property {Date} createdAt
+ * @property {Date} modifiedAt
+ * @property {Date} accessedAt
+ * @property {number} totalRequestCount
+ * @property {number} handledRequestCount
+ * @property {number} pendingRequestCount
+ */

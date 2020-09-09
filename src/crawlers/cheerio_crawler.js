@@ -23,7 +23,7 @@ import AutoscaledPool, { AutoscaledPoolOptions } from '../autoscaling/autoscaled
 import { HandleFailedRequest } from './basic_crawler';
 import Request from '../request';
 import { RequestList } from '../request_list';
-import { ProxyConfiguration } from '../proxy_configuration';
+import { ProxyConfiguration, ProxyInfo } from '../proxy_configuration';
 import { RequestQueue } from '../request_queue';
 import { Session } from '../session_pool/session';
 import { SessionPoolOptions } from '../session_pool/session_pool';
@@ -153,7 +153,7 @@ const DEFAULT_AUTOSCALED_POOL_OPTIONS = {
  *   where the {@link Request} instance corresponds to the failed request, and the `Error` instance
  *   represents the last error thrown during processing of the request.
  *
- *   See [source code](https://github.com/apifytech/apify-js/blob/master/src/crawlers/cheerio_crawler.js#L13)
+ *   See [source code](https://github.com/apify/apify-js/blob/master/src/crawlers/cheerio_crawler.js#L13)
  *   for the default implementation of this function.
  * @property {parseContentTypeFunction} [parseContentTypeFunction]
  *   Overrides the function that parses the content type of a response.
@@ -403,8 +403,8 @@ class CheerioCrawler {
             autoscaledPoolOptions,
 
             // Session pool options
-            sessionPoolOptions,
-            useSessionPool,
+            sessionPoolOptions: this.sessionPoolOptions,
+            useSessionPool: this.useSessionPool,
 
             // log
             log: this.log,
